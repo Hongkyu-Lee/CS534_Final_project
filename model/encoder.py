@@ -18,7 +18,7 @@ class Encoder(nn.Module):
             self.layers.append(self._make_block(c))
         self.layers = nn.Sequential(*self.layers)
 
-        self.out_layer = nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1)
+        self.out_layer = self._out_block()
 
     def forward(self, x):
         
@@ -31,9 +31,16 @@ class Encoder(nn.Module):
 
     def _in_block(self):
         layers = []
-        layers.append(nn.Conv2d(3, self.in_planes, kernel_size=3, stride=1, padding=1, bias=False))
+        layers.append(nn.Conv2d(1, self.in_planes, kernel_size=3, stride=1, padding=1, bias=False))
         layers.append(nn.BatchNorm2d(self.in_planes))
         layers.append(nn.ReLU(inplace=True))
+
+        return nn.Sequential(*layers)
+
+    def _out_block(self):
+        layers = []
+        layers.append(nn.Upsample(size=(50, 200)))
+        layers.append(nn.Conv2d(64, 1, kernel_size=3, stride=1, padding=1))
 
         return nn.Sequential(*layers)
     
@@ -53,12 +60,13 @@ class Encoder(nn.Module):
             layers.append(nn.BatchNorm2d(64))
             layers.append(nn.ReLU(inplace=True))
         elif factor > 0: # upsample
-            layers.append(nn.Upsample(scale_factor=2, mode='bilinear'))
+            layers.append(nn.Upsample(scale_factor=2.0))
             layers.append(nn.Conv2d(64, 64, kernel_size=self._upsample_config['kernel_size'],
                                             stride=self._upsample_config['stride'],
                                             padding=self._upsample_config['padding'], bias=False))
             layers.append(nn.BatchNorm2d(64))
             layers.append(nn.ReLU(inplace=True))
+
         return nn.Sequential(*layers)
 
 

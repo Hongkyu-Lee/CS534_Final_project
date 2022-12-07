@@ -8,7 +8,7 @@ from model.encoder import CNN_PRESET
 import torchvision
 from torch.utils.data import DataLoader
 
-from dataset.dataset import SimpleCAPTCHA
+from dataset.dataset import SimpleCAPTCHAPreProcessor
 from dataset.dataset import SIMPLECAPTCHALEN
 from dataset.dataset import ALPHANUMERIC
 
@@ -33,40 +33,31 @@ def train_encoder(params):
         _Model.cuda()
 
     # transform 
-    _transform = [torchvision.transforms.Compose([
+    _transform = torchvision.transforms.Compose([
                         torchvision.transforms.ToTensor(),
-                    ]),
-                    torchvision.transforms.Compose([
-                        torchvision.transforms.ToTensor(),
-                    ]),
-                    torchvision.transforms.Compose([
-                        torchvision.transforms.ToTensor(),
-                    ])]
+                    ])
 
     # dataset
     if params['dataset'] == 'CAPTCHA_SIMPLE':
         _datapath = os.path.join(params['datapath'], params['dataset'])
-        _data = SimpleCAPTCHA((0.8, 0.1, 0.1), seed=0, path=_datapath, transform=_transform)
+        _data = SimpleCAPTCHAPreProcessor(path=_datapath, mode=params['denoise_mode'],
+                                          transform=_transform)
     elif params['dataset'] == 'CAPTCHA_LARGE':
         # TBA
         exit()
 
     _train_loader = DataLoader(_data.train, batch_size=params['batch_size'])
-    _valid_loader = DataLoader(_data.valid, batch_size=params['batch_size'])
-    _test_loader = DataLoader(_data.test, batch_size=params['batch_size'])
-
 
     for e in range(params['epoch']):
         _avg_loss = 0.0
         _avg_acc = 0.0
-        for _, (_img, _label) in enumerate(_train_loader):
+        for _, (_img, _p_img, _label) in enumerate(_train_loader):
             if USE_CUDA:
-                _tru = _img.clone().detach()
                 _img = _img.cuda()
-                _tru = _tru.cuda()
+                _p_img = _p_img.cuda()
             
             _pred = _Model(_img)
-            _loss = _Loss(_pred, _tru)
+            _loss = _Loss(_pred, _p_img)
             _Optim.zero_grad()
             _loss.backward()
             _Optim.step()
@@ -92,12 +83,13 @@ def train_encoder(params):
 if __name__ == "__main__":
 
     _params = {
-        'epoch': 1000,
+        'epoch': 2000,
         'batch_size': 64,
         'lr' : 1e-4,
         'layer_config' : [-1, 0, -1, 0, 0, 1, 0, 1],
         'cnn_config' : CNN_PRESET[0],
-        'encoder_save_path' : './model/saved_encoders',
+        'denoise_mode' : [1, 3],
+        'encoder_save_path' : './model/saved_encoder_processors',
         'datapath' : './dataset/',
         'dataset' : 'CAPTCHA_SIMPLE'
     }
