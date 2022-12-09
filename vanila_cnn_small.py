@@ -13,7 +13,7 @@ from dataset.dataset import SIMPLECAPTCHALEN
 from dataset.dataset import ALPHANUMERIC
 from dataset.dataset import ALPHANUMERIC_UPPERLOWER
 
-def _accuracy_simple(pred, true, params):
+def _accuracy_simple(pred, true):
     acc = 0.0
     _ans = np.zeros((len(pred), SIMPLECAPTCHALEN))
     _tru = np.zeros((len(pred), SIMPLECAPTCHALEN))
@@ -159,7 +159,7 @@ def run(params):
     if USE_CUDA:
         _Model.cpu()
 
-    
+    np.savetxt(os.path.join(_model_save_path, "record.csv"), _record, delimiter=',')
     torch.save(_Model, os.path.join(_model_save_path, "model.pt"))
     _Model_script = torch.jit.script(_Model)
     _Model_script.save(os.path.join(_model_save_path, "model_jit_scr.pt"))
@@ -172,7 +172,7 @@ def run(params):
 
 if __name__ == "__main__":
     _params = {
-        'epoch': 200,
+        'epoch': 100,
         'batch_size': 64,
         'lr': 1e-4,
         'datapath' : './dataset',

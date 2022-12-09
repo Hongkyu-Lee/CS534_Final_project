@@ -13,6 +13,7 @@ class Encoder(nn.Module):
         self._identity_config = params['cnn_config']['identity']
 
         self.in_layer = self._in_block()
+        self.out_size = params['out_size']
 
         for c in self._layer_config:
             self.layers.append(self._make_block(c))
@@ -39,7 +40,7 @@ class Encoder(nn.Module):
 
     def _out_block(self):
         layers = []
-        layers.append(nn.Upsample(size=(50, 200)))
+        layers.append(nn.Upsample(size=self.out_size))
         layers.append(nn.Conv2d(64, 1, kernel_size=3, stride=1, padding=1))
 
         return nn.Sequential(*layers)
