@@ -13,7 +13,7 @@ from dataset.dataset import SIMPLECAPTCHALEN
 from dataset.dataset import ALPHANUMERIC
 from dataset.dataset import ALPHANUMERIC_UPPERLOWER
 
-def _accuracy_simple(pred, true, params):
+def _accuracy_simple(pred, true):
     acc = 0.0
     _ans = np.zeros((len(pred), SIMPLECAPTCHALEN))
     _tru = np.zeros((len(pred), SIMPLECAPTCHALEN))
@@ -67,7 +67,8 @@ def run(params):
     if params['dataset'] == "CAPTCHA_SIMPLE":
         _Model.fc = nn.Linear(512, SIMPLECAPTCHALEN * len(ALPHANUMERIC))
     elif params['dataset'] == "CAPTCHA_LARGE":
-        _Model.fc = nn.Linear(512, SIMPLECAPTCHALEN * len(ALPHANUMERIC_UPPERLOWER))
+        # _Model.fc = nn.Linear(512, SIMPLECAPTCHALEN * len(ALPHANUMERIC_UPPERLOWER))
+        _Model.fc = nn.Linear(512, SIMPLECAPTCHALEN * len(ALPHANUMERIC))
     #_Loss = nn.CrossEntropyLoss()
     _Loss = nn.MultiLabelSoftMarginLoss()
     #_Loss = nn.KLDivLoss()
@@ -103,7 +104,8 @@ def run(params):
         _train_loader = DataLoader(_captdata.train, batch_size=params['batch_size'])
         _valid_loader = DataLoader(_captdata.valid, batch_size=params['batch_size'])
         _test_loader = DataLoader(_captdata.test, batch_size=params['batch_size'])
-        accuracy = _accuracy_large
+        # accuracy = _accuracy_large
+        accuracy = _accuracy_simple
 
     # record
     _record = np.zeros((params['epoch'], 4)) # train_loss, # train_acc, #validation_acc, #test_acc
@@ -159,7 +161,7 @@ def run(params):
     if USE_CUDA:
         _Model.cpu()
 
-    
+    np.savetxt(os.path.join(_model_save_path, "record.csv"), _record, delimiter=',')
     torch.save(_Model, os.path.join(_model_save_path, "model.pt"))
     _Model_script = torch.jit.script(_Model)
     _Model_script.save(os.path.join(_model_save_path, "model_jit_scr.pt"))
@@ -172,12 +174,12 @@ def run(params):
 
 if __name__ == "__main__":
     _params = {
-        'epoch': 200,
+        'epoch': 100,
         'batch_size': 64,
         'lr': 1e-4,
         'datapath' : './dataset',
-        'dataset': 'CAPTCHA_SIMPLE',
+        'dataset': 'CAPTCHA_LARGE',
         'save_path':  './model/baseline/vanila',
-        'device': 'cuda:1'
+        'device': 'cuda:0'
     }
     run(_params)
