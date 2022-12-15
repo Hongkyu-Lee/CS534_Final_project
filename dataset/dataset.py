@@ -182,12 +182,12 @@ class _LargeCAPTDataset(Dataset):
     def __getitem__(self, idx):
         _img = Image.open(os.path.join(self.path, self.imgList[idx]))
         _img = _img.convert('L')
-        _label = torch.zeros(len(ALPHANUMERIC_UPPERLOWER)*SIMPLECAPTCHALEN)
+        _label = torch.zeros(len(ALPHANUMERIC)*SIMPLECAPTCHALEN)
         if (self.transform is not None):
             _img = self.transform(_img)
-        for c, i in zip(self.imgList[idx], range(SIMPLECAPTCHALEN)):
-            _label[ALPHANUMERIC_UPPERLOWER.index(c) +
-                   i*len(ALPHANUMERIC_UPPERLOWER)] = 1
+        for c, i in zip(self.imgList[idx].lower(), range(SIMPLECAPTCHALEN)):
+            _label[ALPHANUMERIC.index(c) +
+                   i*len(ALPHANUMERIC)] = 1
         
         if(torch.mean(_img) > 0.5):
             _img = 1-_img
@@ -202,6 +202,7 @@ class LargeCAPTCHA():
         _file_list = (os.listdir(path))
         if ".DS_Store" in _file_list:
             _file_list.remove(".DS_Store")
+        _file_list = _file_list[:10000] # first 10,000 images 
         _len = len(_file_list)
         _rand_file_list = np.random.choice(_file_list, size=_len, replace=False)
         _train  = _rand_file_list[0:int(_len*split[0])]
@@ -233,12 +234,12 @@ class _LargeCAPTDataPreprocessor(Dataset):
         _p_img = cv2.imread(os.path.join(self.path, self.imgList[idx]), cv2.IMREAD_GRAYSCALE)
         _p_img = self.process_img(_p_img)
         _p_img = Image.fromarray(_p_img)
-        _label = torch.zeros(len(ALPHANUMERIC_UPPERLOWER)*SIMPLECAPTCHALEN)
+        _label = torch.zeros(len(ALPHANUMERIC)*SIMPLECAPTCHALEN)
         if (self.transform is not None):
             _img = self.transform(_img)
             _p_img = self.transform(_p_img)
-        for c, i in zip(self.imgList[idx], range(SIMPLECAPTCHALEN)):
-            _label[ALPHANUMERIC_UPPERLOWER.index(c) + i*len(ALPHANUMERIC_UPPERLOWER)] = 1
+        for c, i in zip(self.imgList[idx].lower(), range(SIMPLECAPTCHALEN)):
+            _label[ALPHANUMERIC.index(c) + i*len(ALPHANUMERIC)] = 1
         
         return _img, _p_img, _label
 
@@ -283,6 +284,31 @@ class _LargeCAPTDataPreprocessor(Dataset):
             # Repair image
             repair_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,2))
             result = 255 - cv2.morphologyEx(255 - img, cv2.MORPH_CLOSE, repair_kernel, iterations=1)
+
+        elif self.mode == 3: # both
+            if(random.random() > 0.5):
+                horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20,1))
+                detected_lines = cv2.morphologyEx(img, cv2.MORPH_OPEN, horizontal_kernel, iterations=10)
+                cnts = cv2.findContours(detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+                for c in cnts:
+                    cv2.drawContours(img, [c], -1, (255,255,255), 2)
+
+                # Repair image
+                repair_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,3))
+                result = 255 - cv2.morphologyEx(255 - img, cv2.MORPH_CLOSE, repair_kernel, iterations=1)
+            else:
+                #remove horizontal
+                horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,1))
+                detected_lines = cv2.morphologyEx(img, cv2.MORPH_OPEN, horizontal_kernel, iterations=10)
+                cnts = cv2.findContours(detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+                for c in cnts:
+                    cv2.drawContours(img, [c], -1, (255,255,255), 2)
+
+                # Repair image
+                repair_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,2))
+                result = 255 - cv2.morphologyEx(255 - img, cv2.MORPH_CLOSE, repair_kernel, iterations=1)
         
         return result
 
@@ -321,6 +347,7 @@ class LargeCAPTCHAPreProcessor():
         _file_list = (os.listdir(path))
         if ".DS_Store" in _file_list:
             _file_list.remove(".DS_Store")
+        _file_list = _file_list[:10000] # first 10,000 images 
         
         if split is None: 
             self.train = _LargeCAPTDataPreprocessor(_file_list, path, mode, 

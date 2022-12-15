@@ -27,7 +27,7 @@ class EncoderClassifier(nn.Module):
         _classifier = torchvision.models.resnet18(pretrained = False)
         _classifier.conv1 = torch.nn.Conv2d(1,64, kernel_size=(7,7),stride=(2,2),
                                             padding=(3,3),bias=False)
-        _classifier.fc = nn.Linear(512, SIMPLECAPTCHALEN * len(ALPHANUMERIC_UPPERLOWER))
+        _classifier.fc = nn.Linear(512, SIMPLECAPTCHALEN * len(ALPHANUMERIC))
 
         self.classifier = _classifier
 
@@ -37,7 +37,7 @@ class EncoderClassifier(nn.Module):
         return y
 
     def _load_encoder(self, params):
-        _path = os.path.join(params['encoder_path'], "model.pt")
+        _path = os.path.join(params['encoder_path'], params['encoder_name'])
         _model = torch.load(_path)
         return _model
 
@@ -97,6 +97,7 @@ def run(params):
     _model_save_path = os.path.join(params["save_path"], params['dataset'], str(time.time()))
     _data_path = os.path.join(params["data_path"], params['dataset'])
     os.makedirs(_model_save_path, exist_ok = True)
+    _device = params['device']
 
     # model
     _Model = EncoderClassifier(params)
@@ -106,7 +107,7 @@ def run(params):
     #_Loss = nn.KLDivLoss()
     _Optim = torch.optim.Adam(_Model.parameters(), lr=params['lr'])
     if USE_CUDA:
-        _Model.cuda()
+        _Model.to(_device) 
 
     # transform
     _transform = [torchvision.transforms.Compose([
@@ -128,7 +129,7 @@ def run(params):
     _valid_loader = DataLoader(_captdata.valid, batch_size=params['batch_size'])
     _test_loader = DataLoader(_captdata.test, batch_size=params['batch_size'])
 
-    accuracy = _accuracy_large
+    accuracy = _accuracy_simple
     # record
     _record = np.zeros((params['epoch'], 4)) # train_loss, # train_acc, #validation_acc, #test_acc
 
@@ -142,8 +143,8 @@ def run(params):
         _pbar = tqdm(total=len(_train_loader))
         for _, (_img, _label) in enumerate(_train_loader):
             if USE_CUDA:
-                _img = _img.cuda()
-                _label = _label.cuda()
+                _img = _img.to(_device) 
+                _label = _label.to(_device) 
             
             _pred = _Model(_img)
             _loss = _Loss(_pred, _label)
@@ -157,16 +158,16 @@ def run(params):
 
         for _, (_img, _label) in enumerate(_valid_loader):
             if USE_CUDA:
-                _img = _img.cuda()
-                _label = _label.cuda()
+                _img = _img.to(_device) 
+                _label = _label.to(_device) 
 
             _pred = _Model(_img)
             _avg_val_acc += accuracy(_pred, _label)
 
         for _, (_img, _label) in enumerate(_test_loader):
             if USE_CUDA:
-                _img = _img.cuda()
-                _label = _label.cuda()
+                _img = _img.to(_device) 
+                _label = _label.to(_device) 
 
             _pred = _Model(_img)
             _avg_ts_acc += accuracy(_pred, _label)
@@ -203,9 +204,10 @@ if __name__ == "__main__":
         'dataset': 'CAPTCHA_LARGE',
         'save_path':  './model/proposed/',
         'load_encoder': True,
-        'encoder_path': './model/saved_encoder_processors/CAPTCHA_LARGE/160',
+        'encoder_path': './model/saved_encoder_processors/CAPTCHA_LARGE/1/1670625116.972078',
+        'encoder_name': 'model_1860_1.565284143667668.pt',
         'layer_config' : [-1, 0, -1, 0, 0, 1, 0, 1],
         'cnn_config' : CNN_PRESET[0],
-        'device': 'cuda:0'
+        'device': 'cuda:1'
     }
     run(_params)

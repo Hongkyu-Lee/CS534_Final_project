@@ -12,7 +12,7 @@ from dataset.dataset import LargeCAPTCHA
 
 def test_encoder(params):
 
-    _Encoder = torch.load(os.path.join(params['encoder_save_path'], "model.pt"))
+    _Encoder = torch.load(os.path.join(params['encoder_save_path'], params['model_name']))
 
     if torch.cuda.is_available():
         USE_CUDA = True
@@ -54,10 +54,11 @@ def test_encoder(params):
         ax[i, 0].imshow(ToPILImage()(_img[i]), cmap='gray', vmin=0, vmax=255)
         ax[i, 1].imshow(ToPILImage()(_pred[i]), cmap='gray', vmin=0, vmax=255)
 
-    fig_save_path = os.path.join(params['encoder_save_path'], "test_imgs")
+    fig_save_path = os.path.join(params['encoder_save_path'], params['model_name']+"test_imgs")
     os.makedirs(fig_save_path, exist_ok=True)
     fig.savefig(os.path.join(fig_save_path, "img.png"))
 
+# /home/hongkyu/Documents/projects/CS534_FINAL/model/saved_encoder_processors/CAPTCHA_LARGE/3/1670658565.0962765/model_2750_4.597142804414034.pt
 
 if __name__ == "__main__":
     _params = {
@@ -65,7 +66,8 @@ if __name__ == "__main__":
         'batch_size': 4,
         'layer_config' : [-1, -1, 0, 0, 1, 1],
         'cnn_config' : CNN_PRESET[0],
-        'encoder_save_path' : './model/saved_encoder_processors/CAPTCHA_LARGE/160',
+        'encoder_save_path' : './model/saved_encoder_processors/CAPTCHA_LARGE/3/1670658565.0962765',
+        'model_name' : 'model_2750_4.597142804414034.pt',
         'datapath' : './dataset/',
         'dataset' : 'CAPTCHA_LARGE'
     }

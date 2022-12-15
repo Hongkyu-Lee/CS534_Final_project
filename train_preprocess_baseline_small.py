@@ -185,8 +185,8 @@ if __name__ == "__main__":
         'lr': 1e-4,
         'datapath' : './dataset/',
         'dataset': 'CAPTCHA_SIMPLE',
-        'denoise_mode': [4],
+        'denoise_mode': [2],
         'save_path':  './model/baseline/preprocessing',
-        'device': 'cuda:0'
+        'device': 'cuda:1'
     }
     run(_params)

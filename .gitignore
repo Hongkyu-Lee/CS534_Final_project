@@ -1,0 +1,8 @@
+.DS_Store
+dataset/CAPTCHA_LARGE
+venv/
+model/saved_encoders/
+model/saved_encoder_processors/
+model/baseline/
+model/preprocessed/
+model/proposed/

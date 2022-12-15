@@ -7,6 +7,7 @@ from model.encoder import Encoder
 from model.encoder import CNN_PRESET
 import torchvision
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from dataset.dataset import SimpleCAPTCHAPreProcessor
 from dataset.dataset import LargeCAPTCHAPreProcessor
@@ -89,16 +90,16 @@ def train_encoder(params):
 if __name__ == "__main__":
 
     _params = {
-        'epoch': 2000,
+        'epoch': 20000,
         'batch_size': 64,
         'lr' : 1e-4,
         'layer_config' : [-1, 0, -1, 0, 0, 1, 0, 1],
         'cnn_config' : CNN_PRESET[0],
-        'denoise_mode' : 1,
+        'denoise_mode' : 3,
         'encoder_save_path' : './model/saved_encoder_processors',
         'datapath' : './dataset/',
         'dataset' : 'CAPTCHA_LARGE',
-        'device': 'cuda:1',
+        'device': 'cuda:0',
         'out_size': (40,150)
     }
 
